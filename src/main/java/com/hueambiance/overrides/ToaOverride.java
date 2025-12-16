@@ -23,7 +23,6 @@ public class ToaOverride implements AmbianceOverride {
 
     private static final int VARBIT_VALUE_CHEST_KEY = 2;
     private static final int VARBIT_ID_SARCOPHAGUS = 14373;
-    private boolean active = false;
     private boolean activatedBefore = false;
 
     @Inject
@@ -38,17 +37,31 @@ public class ToaOverride implements AmbianceOverride {
     @Override
     public boolean doesOverride(final Room room)
     {
-        return active;
+        if (client.getLocalPlayer() == null)
+        {
+            return false;
+        }
+
+        WorldPoint wp = client.getLocalPlayer().getWorldLocation();
+        int region = wp.getRegionID();
+
+        return region == TOA_TOMB_REGION;
     }
 
     @Override
     public void handleGameTick(final GameTick gameTick, final Room room)
     {
-        final LocalPoint lp = client.getLocalPlayer().getLocalLocation();
-        final int region = lp == null ? -1 : WorldPoint.fromLocalInstance(client, lp).getRegionID();
-        if(region == TOA_TOMB_REGION && !activatedBefore)
+        if (!doesOverride(room))
         {
-            final boolean sarcophagusIsPurple = client.getVarbitValue(VARBIT_ID_SARCOPHAGUS) % 2 != 0;
+            activatedBefore = false;
+            return;
+        }
+
+        if(!activatedBefore)
+        {
+            final int sarcValue = client.getVarbitValue(VARBIT_ID_SARCOPHAGUS);
+            final boolean sarcophagusIsPurple = sarcValue % 2 != 0;
+
             if(sarcophagusIsPurple)
             {
                 boolean purpleIsMine = true;
@@ -61,24 +74,15 @@ public class ToaOverride implements AmbianceOverride {
                     }
                 }
 
+                activatedBefore = true;
                 if (purpleIsMine)
                 {
-                    active = true;
-                    activatedBefore = true;
-                    hueHelper.setColorForDuration(room, config.toaColor(), Duration.ofSeconds(15), () -> active = false);
-                } else
+                    hueHelper.setColor(room, config.toaColor());
+                } else if(config.toaShowOthersPurple())
                 {
-                    if(config.toaShowOthersPurple())
-                    {
-                        active = true;
-                        activatedBefore = true;
-                        hueHelper.setColorForDuration(room, config.toaOthersColor(), Duration.ofSeconds(15), () -> active = false);
-                    }
+                    hueHelper.setColor(room, config.toaColor());
                 }
             }
-        } else if(region != TOA_TOMB_REGION && activatedBefore)
-        {
-            activatedBefore = false;
         }
     }
 }
