@@ -16,7 +16,7 @@ import java.time.Duration;
 @Singleton
 public class ToaOverride implements AmbianceOverride {
 
-    private static final int TOA_TOMB_REGION = 14160;
+    private static final int TOA_TOMB_REGION = 14672;
     private static final int[] VARBIT_MULTILOC_IDS_CHEST = new int[]{
             14356, 14357, 14358, 14359, 14360, 14370, 14371, 14372
     };
